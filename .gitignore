@@ -1,0 +1,35 @@
+cat > .gitignore <<EOF
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build files
+*.test
+*.out
+
+# Dependency directories
+vendor/
+
+# Environment files
+.env
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Coverage files
+coverage.out
+
+# Temporary files
+tmp/
+EOF
