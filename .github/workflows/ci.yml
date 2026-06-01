@@ -22,3 +22,6 @@ jobs:
 
       - name: Run Tests
         run: go test ./...
+
+      - name: Run Lint
+        run: golangci-lint run
