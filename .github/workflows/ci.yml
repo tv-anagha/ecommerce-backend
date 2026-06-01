@@ -14,10 +14,13 @@ jobs:
 
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.24"
+        go-version: "1.25"
 
       - name: Run Tests
         run: go test ./...
 
       - name: Run GolangCI-Lint
         uses: golangci/golangci-lint-action@v8
+  
+      - name: Build Docker Image
+        run: docker build -t user-service .
