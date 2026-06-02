@@ -1,6 +1,6 @@
-cat > .gitignore <<EOF
 # Binaries
 bin/
+user-service/user-service
 *.exe
 *.exe~
 *.dll
@@ -32,4 +32,3 @@ coverage.out
 
 # Temporary files
 tmp/
-EOF
