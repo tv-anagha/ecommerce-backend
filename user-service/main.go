@@ -38,7 +38,11 @@ func main() {
 			})
 			return
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				log.Printf("close response body: %v", closeErr)
+			}
+		}()
 	})
 
 	fmt.Fprintf(os.Stderr, "user-service listening on %s\n", listenAddr)
