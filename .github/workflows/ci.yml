@@ -33,7 +33,7 @@ jobs:
         run: go test ./...
 
       - name: Build
-        run: go build -o user-service .git commit -m "Fix go.mod direct deps and Docker build for CI"
+        run: go build -o user-service .
 
       - name: Run GolangCI-Lint
         uses: golangci/golangci-lint-action@v8
