@@ -1,6 +1,11 @@
 # Binaries
 bin/
+**/server
 user-service/user-service
+product-service/product-service
+api-gateway/api-gateway
+cart-service/cart-service
+order-service/order-service
 *.exe
 *.exe~
 *.dll

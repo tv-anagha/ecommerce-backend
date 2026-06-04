@@ -23,6 +23,12 @@ func env(primary, fallback string) string {
 func Connect() {
 	_ = godotenv.Load()
 	_ = godotenv.Load("../.env")
+	_ = godotenv.Load("../../.env")
+
+	dbName := env("POSTGRES_DB", "DB_NAME")
+	if dbName == "" {
+		dbName = "product_db"
+	}
 
 	sslmode := env("POSTGRES_SSLMODE", "")
 	if sslmode == "" {
@@ -33,20 +39,19 @@ func Connect() {
 		env("POSTGRES_HOST", "DB_HOST"),
 		env("POSTGRES_USER", "DB_USER"),
 		env("POSTGRES_PASSWORD", "DB_PASSWORD"),
-		env("POSTGRES_DB", "DB_NAME"),
+		dbName,
 		env("POSTGRES_PORT", "DB_PORT"),
 		env("POSTGRES_TIMEZONE", "UTC"),
 		sslmode,
 	)
 
 	var err error
-
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("product-service: database connect failed: %v", err)
 	}
 
-	log.Println("Database connected successfully")
+	log.Println("product-service: database connected")
 }

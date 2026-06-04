@@ -3,11 +3,11 @@ FROM golang:1.25-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
-COPY main.go ./
+COPY cmd/ ./cmd/
 COPY internal/ ./internal/
-RUN CGO_ENABLED=0 go build -o /user-service .
+RUN CGO_ENABLED=0 go build -o /api-gateway ./cmd/server
 
 FROM alpine:3.21
-COPY --from=build /user-service /user-service
+COPY --from=build /api-gateway /api-gateway
 EXPOSE 8080
-ENTRYPOINT ["/user-service"]
+ENTRYPOINT ["/api-gateway"]

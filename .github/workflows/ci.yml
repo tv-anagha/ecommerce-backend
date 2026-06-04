@@ -4,24 +4,34 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api-gateway
+          - product-service
+          - user-service
+          - cart-service
+          - order-service
 
     defaults:
       run:
-        working-directory: user-service
+        working-directory: ${{ matrix.service }}
 
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-go@v6
         with:
-          go-version-file: user-service/go.mod
-          cache-dependency-path: user-service/go.sum
+          go-version-file: ${{ matrix.service }}/go.mod
+          cache-dependency-path: ${{ matrix.service }}/go.sum
 
       - name: Sync and verify modules
         run: |
@@ -29,17 +39,17 @@ jobs:
           go mod verify
           git diff --exit-code go.mod go.sum
 
-      - name: Run Tests
+      - name: Run tests
         run: go test ./...
 
       - name: Build
-        run: go build -o user-service .
+        run: go build -o server ./cmd/server
 
       - name: Run GolangCI-Lint
         uses: golangci/golangci-lint-action@v8
         with:
-          working-directory: user-service
+          working-directory: ${{ matrix.service }}
           skip-cache: true
 
-      - name: Build Docker Image
-        run: docker build -t user-service .
+      - name: Build Docker image
+        run: docker build -t ${{ matrix.service }} .
