@@ -1,6 +1,7 @@
-# Binaries
+# Binaries (go build -o server; do not use **/server — it ignores cmd/server/)
 bin/
-**/server
+api-gateway/server
+product-service/server
 api-gateway/api-gateway
 product-service/product-service
 *.exe
