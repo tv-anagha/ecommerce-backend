@@ -25,11 +25,18 @@ func main() {
 
 	database.Connect()
 
+	//Repository talks directly to the database.
 	repo := repository.NewProductRepository()
+	//Service talks to the repository. Service contains business logic.
 	svc := service.NewProductService(repo)
+	//Handlers receive HTTP requests and pass them to the service.
 	h := handler.NewProductHandler(svc)
 
+
+	// Route registration
 	r := gin.Default()
+	// Gateway registers Gin routes and mounts the reverse proxy:
+
 	r.GET("/health", h.Health)
 	r.GET("/products", h.ListProducts)
 	r.GET("/products/:id", h.GetProduct)

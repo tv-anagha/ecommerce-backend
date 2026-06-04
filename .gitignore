@@ -2,8 +2,10 @@
 bin/
 api-gateway/server
 product-service/server
+user-service/server
 api-gateway/api-gateway
 product-service/product-service
+user-service/user-service
 *.exe
 *.exe~
 *.dll

@@ -41,11 +41,14 @@ func listenAddr() string {
 	return "0.0.0.0:8080"
 }
 
+//This function creates a reverse proxy route in the API Gateway and forwards incoming requests to a target microservice.
 func mountProxy(r *gin.Engine, gatewayPrefix, rewritePrefix, targetURL string) {
-	target := proxy.MustParseURL(targetURL)
-	h := proxy.Handler(target, gatewayPrefix, rewritePrefix)
-	r.Any(gatewayPrefix+"/*path", gin.WrapH(h))
-	r.Any(gatewayPrefix, gin.WrapH(h))
+	target := proxy.MustParseURL(targetURL) // targetURL = GET /api/users/123
+	h := proxy.Handler(target, gatewayPrefix, rewritePrefix) // gatewayPrefix = /api/users/123, rewritePrefix = /api/users -> http://localhost:8001/users/123
+		// Match all nested routes. Example:  /api/users/123/orders, /api/users/profile, /api/users/1
+	r.Any(gatewayPrefix+"/*path", gin.WrapH(h)) 
+		// Match the root route itself. Example: /api/users
+	r.Any(gatewayPrefix, gin.WrapH(h)) 
 }
 
 func checkHealth(url string) gin.H {
@@ -70,6 +73,7 @@ func main() {
 	fmt.Fprintf(os.Stderr, "api-gateway starting on %s\n", addr)
 
 	productURL := env("PRODUCT_SERVICE_URL", "http://localhost:8081")
+	userURL := env("USER_SERVICE_URL", "http://localhost:8082")
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -84,11 +88,16 @@ func main() {
 			"service": "api-gateway",
 			"services": gin.H{
 				"product": checkHealth(productURL + "/health"),
+				"user":    checkHealth(userURL + "/health"),
 			},
 		})
 	})
 
 	mountProxy(r, "/api/products", "/products", productURL)
+	mountProxy(r, "/api/users", "/users", userURL)
+	// UI-friendly auth paths (same handlers as /api/users and /api/users/login)
+	mountProxy(r, "/api/register", "/register", userURL)
+	mountProxy(r, "/api/login", "/login", userURL)
 
 	fmt.Fprintf(os.Stderr, "api-gateway listening on %s\n", addr)
 	if err := r.Run(addr); err != nil {
