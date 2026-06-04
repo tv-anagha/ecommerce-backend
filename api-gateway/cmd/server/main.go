@@ -54,7 +54,7 @@ func checkHealth(url string) gin.H {
 	if err != nil {
 		return gin.H{"status": "down", "error": err.Error()}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return gin.H{"status": "down", "httpStatus": resp.StatusCode}
 	}
