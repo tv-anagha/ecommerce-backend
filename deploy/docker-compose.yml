@@ -30,68 +30,14 @@ services:
     ports:
       - "8081:8081"
 
-  user-service:
-    build: ../user-service
-    environment:
-      PORT: "8082"
-      DB_HOST: postgres
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: user_db
-      DB_PORT: "5432"
-      JWT_SECRET: dev-secret-change-in-production
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8082:8082"
-
-  cart-service:
-    build: ../cart-service
-    environment:
-      PORT: "8083"
-      DB_HOST: postgres
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: cart_db
-      DB_PORT: "5432"
-      PRODUCT_SERVICE_URL: http://product-service:8081
-    depends_on:
-      - product-service
-    ports:
-      - "8083:8083"
-
-  order-service:
-    build: ../order-service
-    environment:
-      PORT: "8084"
-      DB_HOST: postgres
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: order_db
-      DB_PORT: "5432"
-      CART_SERVICE_URL: http://cart-service:8083
-      PRODUCT_SERVICE_URL: http://product-service:8081
-    depends_on:
-      - cart-service
-      - product-service
-    ports:
-      - "8084:8084"
-
   api-gateway:
     build: ../api-gateway
     environment:
       PORT: "8080"
       PRODUCT_SERVICE_URL: http://product-service:8081
-      USER_SERVICE_URL: http://user-service:8082
-      CART_SERVICE_URL: http://cart-service:8083
-      ORDER_SERVICE_URL: http://order-service:8084
       CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173
     depends_on:
       - product-service
-      - user-service
-      - cart-service
-      - order-service
     ports:
       - "8080:8080"
 

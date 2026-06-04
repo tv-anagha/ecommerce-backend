@@ -1,2 +1,1 @@
 CREATE DATABASE product_db;
-CREATE DATABASE cart_db;
