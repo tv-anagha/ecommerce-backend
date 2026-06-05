@@ -18,6 +18,8 @@ jobs:
           - api-gateway
           - product-service
           - user-service
+          - cart-service
+          - order-service
 
     defaults:
       run:

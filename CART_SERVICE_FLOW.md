@@ -160,6 +160,6 @@ cd api-gateway && PORT=8080 CART_SERVICE_URL=http://localhost:8083 go run ./cmd/
 
 - **user-service** provides `userId` after login (JWT flow in [USER_SERVICE_FLOW.md](USER_SERVICE_FLOW.md)).
 - **cart-service** stores what the user intends to buy.
-- **order-service** (planned) will read the cart, create an order, and clear the cart.
+- **order-service** reads the cart, creates an order, and clears the cart (see [ORDER_SERVICE_FLOW.md](ORDER_SERVICE_FLOW.md)).
 
 Auth on cart routes is not enforced yet; `userId` is passed in the URL. In production, the gateway or cart-service should verify the JWT and ensure the caller can only access their own cart.
