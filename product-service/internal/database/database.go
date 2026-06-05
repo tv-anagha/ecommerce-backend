@@ -35,13 +35,18 @@ func Connect() {
 		sslmode = "disable"
 	}
 
+	timezone := env("POSTGRES_TIMEZONE", "")
+	if timezone == "" {
+		timezone = "UTC"
+	}
+
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s TimeZone=%s sslmode=%s",
 		env("POSTGRES_HOST", "DB_HOST"),
 		env("POSTGRES_USER", "DB_USER"),
 		env("POSTGRES_PASSWORD", "DB_PASSWORD"),
 		dbName,
 		env("POSTGRES_PORT", "DB_PORT"),
-		env("POSTGRES_TIMEZONE", "UTC"),
+		timezone,
 		sslmode,
 	)
 
