@@ -74,6 +74,7 @@ func main() {
 
 	productURL := env("PRODUCT_SERVICE_URL", "http://localhost:8081")
 	userURL := env("USER_SERVICE_URL", "http://localhost:8082")
+	cartURL := env("CART_SERVICE_URL", "http://localhost:8083")
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -89,6 +90,7 @@ func main() {
 			"services": gin.H{
 				"product": checkHealth(productURL + "/health"),
 				"user":    checkHealth(userURL + "/health"),
+				"cart":    checkHealth(cartURL + "/health"),
 			},
 		})
 	})
@@ -98,7 +100,8 @@ func main() {
 	// UI-friendly auth paths (same handlers as /api/users and /api/users/login)
 	mountProxy(r, "/api/register", "/register", userURL)
 	mountProxy(r, "/api/login", "/login", userURL)
-
+	mountProxy(r, "/api/carts", "/carts", cartURL)
+	
 	fmt.Fprintf(os.Stderr, "api-gateway listening on %s\n", addr)
 	if err := r.Run(addr); err != nil {
 		log.Fatal("server failed:", err)
