@@ -1,11 +1,13 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 
 	"github.com/tv-anagha/ecommerce-backend/order-service/internal/client"
+	"github.com/tv-anagha/ecommerce-backend/order-service/internal/events"
 	"github.com/tv-anagha/ecommerce-backend/order-service/internal/model"
 	"github.com/tv-anagha/ecommerce-backend/order-service/internal/repository"
 )
@@ -16,21 +18,24 @@ type OrderService struct {
 	repo          *repository.OrderRepository
 	cartClient    *client.CartClient
 	productClient *client.ProductClient
+	publisher     events.Publisher
 }
 
-func NewOrderService(
+func NewOrderService(	
 	repo *repository.OrderRepository,
 	cartClient *client.CartClient,
 	productClient *client.ProductClient,
+	publisher events.Publisher,
 ) *OrderService {
 	return &OrderService{
 		repo:          repo,
 		cartClient:    cartClient,
 		productClient: productClient,
+		publisher:     publisher,
 	}
 }
 
-func (s *OrderService) PlaceOrder(userID uint) (*model.Order, error) {
+func (s *OrderService) PlaceOrder(ctx context.Context, userID uint) (*model.Order, error) {
 	cartItems, err := s.cartClient.GetCart(userID)
 	if err != nil {
 		return nil, err
@@ -73,6 +78,12 @@ func (s *OrderService) PlaceOrder(userID uint) (*model.Order, error) {
 			log.Printf("order-service: failed to clear cart item userId=%d productId=%d: %v",
 				userID, item.ProductID, err)
 		}
+	}
+
+	// Publish AFTER database commit so we never emit events for failed orders.
+	// If publish fails, log error but still return 201 — notification is best-effort in Phase 1.
+	if err := s.publisher.PublishOrderPlaced(ctx, order); err != nil {
+		log.Printf("kafka: failed to publish order.placed for order %d: %v", order.ID, err)
 	}
 
 	return order, nil

@@ -79,6 +79,34 @@ services:
         condition: service_healthy
     restart: "no"
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
   order-service:
     build: ../order-service
     environment:
@@ -90,6 +118,8 @@ services:
       DB_PORT: "5432"
       CART_SERVICE_URL: http://cart-service:8083
       PRODUCT_SERVICE_URL: http://product-service:8081
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC: order.placed
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,8 +129,25 @@ services:
         condition: service_started
       product-service:
         condition: service_started
+      kafka:
+        condition: service_healthy
     ports:
       - "8084:8084"
+
+  notification-service:
+    build: ../notification-service
+    environment:
+      PORT: "8085"
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC: order.placed
+      KAFKA_GROUP_ID: notification-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      order-service:
+        condition: service_started
+    ports:
+      - "8085:8085"
 
   api-gateway:
     build: ../api-gateway

@@ -20,6 +20,7 @@ jobs:
           - user-service
           - cart-service
           - order-service
+          - notification-service
 
     defaults:
       run:

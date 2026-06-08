@@ -11,6 +11,7 @@ import (
 	"github.com/tv-anagha/ecommerce-backend/order-service/internal/service"
 )
 
+//Creates a handler that knows about the service.
 type OrderHandler struct {
 	svc *service.OrderService
 }
@@ -38,7 +39,7 @@ func (h *OrderHandler) PlaceOrder(c *gin.Context) {
 		return
 	}
 
-	order, err := h.svc.PlaceOrder(body.UserID)
+	order, err := h.svc.PlaceOrder(c.Request.Context(), body.UserID)
 	if errors.Is(err, service.ErrEmptyCart) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
