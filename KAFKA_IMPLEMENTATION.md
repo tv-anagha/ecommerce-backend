@@ -354,6 +354,29 @@ Order received successfully.
 | `connection refused` to `localhost:8083` inside gateway | Missing `CART_SERVICE_URL` in Docker | Use `http://cart-service:8083` in compose |
 | Producer errors in order-service logs | Wrong `KAFKA_BROKERS` | Use `kafka:29092` inside Docker, `localhost:9092` on host |
 | Consumer reads old messages | `StartOffset: FirstOffset` | Expected on first run; use new consumer group to skip |
+| Kafka `Exited (1)` / `NodeExistsException` | Stale broker registration in Zookeeper after unclean shutdown | See below |
+
+### Kafka `NodeExistsException` fix
+
+If `docker compose logs kafka` shows:
+
+```text
+KeeperException$NodeExistsException: KeeperErrorCode = NodeExists
+```
+
+Zookeeper still has old broker metadata from a previous Kafka container. Reset both:
+
+```bash
+cd deploy
+docker compose stop kafka zookeeper
+docker compose rm -f kafka zookeeper
+docker compose up -d zookeeper
+sleep 5
+docker compose up -d kafka
+docker compose up -d order-service notification-service
+```
+
+Or recreate the whole stack: `docker compose down && docker compose up -d --build`
 
 ---
 

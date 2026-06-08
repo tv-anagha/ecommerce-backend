@@ -63,5 +63,5 @@ func Connect() {
 		log.Fatalf("order-service: migrate failed: %v", err)
 	}
 
-	log.Println("order-service: database connected")
+	log.Printf("order-service: database connected (dbname=%s)", dbName)
 }
