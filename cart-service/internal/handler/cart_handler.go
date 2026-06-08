@@ -85,6 +85,10 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if errors.Is(err, service.ErrInsufficientStock) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	if errors.Is(err, client.ErrProductNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -118,6 +122,10 @@ func (h *CartHandler) UpdateItem(c *gin.Context) {
 
 	item, err := h.svc.UpdateItem(userID, productID, body.Quantity)
 	if errors.Is(err, service.ErrInvalidQuantity) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if errors.Is(err, service.ErrInsufficientStock) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

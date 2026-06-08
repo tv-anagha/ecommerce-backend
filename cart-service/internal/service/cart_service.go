@@ -9,6 +9,7 @@ import (
 )
 
 var ErrInvalidQuantity = errors.New("quantity must be greater than zero")
+var ErrInsufficientStock = errors.New("insufficient stock available")
 
 type CartService struct {
 	repo          *repository.CartRepository
@@ -30,25 +31,43 @@ func (s *CartService) AddItem(userID, productID uint, quantity int) (model.CartI
 	if quantity <= 0 {
 		return model.CartItem{}, ErrInvalidQuantity
 	}
-	if err := s.productClient.ProductExists(productID); err != nil {
-		return model.CartItem{}, err
-	}
 
-	existing, err := s.repo.GetByUserAndProduct(userID, productID)
-	if errors.Is(err, repository.ErrCartItemNotFound) {
-		return s.repo.UpsertItem(userID, productID, quantity)
-	}
+	product, err := s.productClient.GetProduct(productID)
 	if err != nil {
 		return model.CartItem{}, err
 	}
 
-	return s.repo.UpsertItem(userID, productID, existing.Quantity+quantity)
+	existing, err := s.repo.GetByUserAndProduct(userID, productID)
+	var targetQuantity int
+	if errors.Is(err, repository.ErrCartItemNotFound) {
+		targetQuantity = quantity
+	} else if err != nil {
+		return model.CartItem{}, err
+	} else {
+		targetQuantity = existing.Quantity + quantity
+	}
+
+	if targetQuantity > product.Quantity {
+		return model.CartItem{}, ErrInsufficientStock
+	}
+
+	return s.repo.UpsertItem(userID, productID, targetQuantity)
 }
 
 func (s *CartService) UpdateItem(userID, productID uint, quantity int) (model.CartItem, error) {
 	if quantity <= 0 {
 		return model.CartItem{}, ErrInvalidQuantity
 	}
+
+	product, err := s.productClient.GetProduct(productID)
+	if err != nil {
+		return model.CartItem{}, err
+	}
+
+	if quantity > product.Quantity {
+		return model.CartItem{}, ErrInsufficientStock
+	}
+
 	return s.repo.UpdateQuantity(userID, productID, quantity)
 }
 

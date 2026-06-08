@@ -6,6 +6,7 @@ type Product struct {
 	Price    float64 `json:"price"`
 	Category string  `json:"category"`
 	ImageURL string  `json:"image_url" gorm:"column:image_url"`
+	Quantity int     `json:"quantity" gorm:"column:quantity"`
 }
 
 func (Product) TableName() string {
