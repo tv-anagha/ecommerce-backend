@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/tv-anagha/ecommerce-backend/product-service/internal/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -56,6 +57,10 @@ func Connect() {
 	})
 	if err != nil {
 		log.Fatalf("product-service: database connect failed: %v", err)
+	}
+
+	if err := DB.AutoMigrate(&model.Product{}); err != nil {
+		log.Fatalf("product-service: migrate failed: %v", err)
 	}
 
 	log.Println("product-service: database connected")
