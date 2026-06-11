@@ -243,6 +243,7 @@ Not required when auto-create is enabled.
 2. Cart items are cleared via cart-service HTTP calls.
 3. `publisher.PublishOrderPlaced(ctx, order)` marshals JSON and writes to Kafka.
 4. If publish fails, error is **logged** but HTTP still returns `201` (best-effort in Phase 1).
+5. When `KAFKA_BROKERS` is unset (minimal stack), a **noop publisher** skips events cleanly instead of failing against `localhost:9092`.
 
 ### Library
 
@@ -267,9 +268,9 @@ Not required when auto-create is enabled.
 3. JSON is unmarshaled into `OrderPlacedEvent`.
 4. Logs:
    - `[kafka] order.placed received — orderId=... userId=... total=...`
-   - `Thank you for your order.`
+   - `Thank you for your order #<id>! We received your purchase of $<total>.`
    - `Order received successfully.`
-5. Offset is committed automatically (`CommitInterval: 1s`).
+5. Offset is committed automatically (`CommitInterval: 1s`). New consumer groups start at **latest** offset (`StartOffset: LastOffset`) so restarts do not replay old orders.
 
 On SIGTERM, context is cancelled and the reader closes gracefully.
 
@@ -292,6 +293,9 @@ On SIGTERM, context is cancelled and the reader closes gracefully.
 ```bash
 cd deploy
 docker compose up --build -d
+
+# Automated Phase 1 loop (recommended)
+./scripts/test-phase1.sh
 
 # Wait for Kafka health (may take ~30s on first start)
 docker compose ps kafka

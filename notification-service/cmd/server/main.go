@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/tv-anagha/ecommerce-backend/notification-service/internal/consumer"
 	"github.com/tv-anagha/ecommerce-backend/notification-service/internal/handler"
 )
@@ -22,6 +23,10 @@ func listenAddr() string {
 }
 
 func main() {
+	_ = godotenv.Load()
+	_ = godotenv.Load("../.env")
+	_ = godotenv.Load("../../.env")
+
 	addr := listenAddr()
 	fmt.Fprintf(os.Stderr, "notification-service starting on %s\n", addr)
 

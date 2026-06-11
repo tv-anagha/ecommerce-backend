@@ -1,6 +1,6 @@
 # Ecommerce Backend (Microservices)
 
-Go monorepo with API gateway, product catalog, and basic user auth for checkout.
+Go monorepo with API gateway, product catalog, cart, orders, user auth, and **Phase 1 Kafka** (`order.placed` → notification-service).
 
 ## Architecture
 
@@ -9,20 +9,27 @@ Go monorepo with API gateway, product catalog, and basic user auth for checkout.
 | api-gateway | 8080 | Public entry, CORS, reverse proxy |
 | product-service | 8081 | Product catalog |
 | user-service | 8082 | Register, login, JWT for checkout |
+| cart-service | 8083 | Shopping carts |
+| order-service | 8084 | Checkout; publishes `order.placed` to Kafka |
+| notification-service | 8085 | Consumes `order.placed`, logs thank-you |
+| kafka | 9092 | Event broker (Docker internal: `kafka:29092`) |
 
-See [USER_SERVICE_FLOW.md](USER_SERVICE_FLOW.md) for auth flow.
+See [USER_SERVICE_FLOW.md](USER_SERVICE_FLOW.md), [ORDER_SERVICE_FLOW.md](ORDER_SERVICE_FLOW.md), and [KAFKA_IMPLEMENTATION.md](KAFKA_IMPLEMENTATION.md).
 
-## Quick start (Docker)
+## Quick start (Docker — full stack with Kafka)
 
 ```bash
 cd deploy
-docker compose up --build
+docker compose up --build -d
+./scripts/test-phase1.sh   # verify order.placed → thank-you loop
 ```
 
 ```bash
 curl http://localhost:8080/health
 curl http://localhost:8080/api/products
 ```
+
+**Small VMs:** use `docker-compose.minimal.yml` (no Kafka). Phase 1 requires full `docker-compose.yml`.
 
 ## Local development (without Docker)
 

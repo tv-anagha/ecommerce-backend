@@ -1,5 +1,8 @@
 # Lightweight stack for small VMs (< 10 GB disk).
 # Skips Kafka, Zookeeper, and notification-service (~1.5 GB saved).
+# order-service uses a noop Kafka publisher (no KAFKA_BROKERS).
+#
+# Phase 1 (order.placed events) requires full docker-compose.yml instead.
 #
 # Usage:
 #   docker compose -f docker-compose.minimal.yml up --build -d

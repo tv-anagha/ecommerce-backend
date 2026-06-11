@@ -311,13 +311,66 @@ Typical user journey:
 login (user-service) → browse (product-service) → add to cart (cart-service) → checkout (order-service)
 ```
 
-## Design notes and limitations (Phase 0)
+## Design notes and limitations
 
 - **No distributed transaction:** Order is saved first, then cart is cleared via separate HTTP DELETEs. If cart clear fails, the user may see duplicate-checkout risk if they retry — logged but not rolled back.
 - **No auth on routes:** `userId` is passed in the request body; production should verify JWT and ensure callers can only checkout their own cart.
-- **Synchronous only:** Checkout blocks until cart read, pricing, DB write, and cart clear complete. Phase 1 will add Kafka `order.placed` events for async notifications after the order is persisted.
 - **No inventory deduction:** Stock is not decremented; that is future event-driven work.
 
-## Future: Kafka (Phase 1)
+## Phase 1 — Kafka `order.placed` (implemented)
 
-After `repository.Create` succeeds and before returning `201`, order-service will publish an `order.placed` event to Kafka. **notification-service** will consume it and send confirmations without blocking checkout. See the project plan for `KAFKA_IMPLEMENTATION.md` when that phase lands.
+After checkout saves the order and clears the cart, **order-service** publishes an `order.placed` event to Kafka. **notification-service** consumes it asynchronously and logs a thank-you message. Checkout still returns `201` even if Kafka publish fails (best-effort).
+
+### Architecture with events
+
+```text
+Frontend → api-gateway → order-service
+                              ├──► order_db
+                              ├──► cart-service (sync)
+                              ├──► product-service (sync)
+                              └──► Kafka topic order.placed
+                                        └──► notification-service (async log)
+```
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant OS as order-service
+    participant DB as order_db
+    participant KF as Kafka
+    participant NS as notification-service
+
+    FE->>OS: POST /orders
+    OS->>DB: INSERT order
+    OS->>KF: produce order.placed
+    OS-->>FE: 201 Created
+    KF-->>NS: deliver message
+    NS->>NS: log Thank you for your order
+```
+
+### Checkout step added (after cart clear)
+
+| Step | Layer | What happens |
+|------|-------|--------------|
+| 13 | **events** | `PublishOrderPlaced` marshals JSON (`eventType`, `orderId`, `userId`, `items`, `placedAt`) and writes to Kafka keyed by `userId`. |
+| 14 | **service** | Publish failure is logged only; HTTP response remains `201`. |
+
+### Kafka environment variables
+
+| Variable | Docker Compose value | When omitted |
+|----------|---------------------|--------------|
+| `KAFKA_BROKERS` | `kafka:29092` | Noop publisher — events skipped (minimal stack) |
+| `KAFKA_TOPIC` | `order.placed` | Defaults to `order.placed` |
+| `KAFKA_ENABLED` | — | Set `false` to force-disable even if brokers are set |
+
+### Run Phase 1 locally
+
+```bash
+cd deploy
+docker compose up --build -d
+./scripts/test-phase1.sh
+```
+
+See [KAFKA_IMPLEMENTATION.md](../KAFKA_IMPLEMENTATION.md) for full setup, troubleshooting, and manual curl steps.
+
+**Note:** `docker-compose.minimal.yml` skips Kafka and notification-service for small VMs. Use full `docker-compose.yml` for Phase 1.
