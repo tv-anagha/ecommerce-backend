@@ -388,8 +388,8 @@ Or recreate the whole stack: `docker compose down && docker compose up -d --buil
 
 | Phase | Enhancement |
 |-------|-------------|
-| **Phase 2** | Idempotent consumers (dedupe by `orderId`) |
-| **Phase 3** | Dead-letter topic (DLQ) for failed messages |
+| **Phase 2** | Multiple consumers, one event (fan-out) — see [KAFKA_PHASE2.md](KAFKA_PHASE2.md) |
+| **Phase 3** | Idempotent consumers (dedupe by `orderId`) + dead-letter topic (DLQ) |
 | **Phase 4** | `inventory.reserved` / `inventory.released` events |
 | **Phase 5** | Real email/SMS adapters behind notification-service |
 | **Phase 6** | Schema Registry (Avro/Protobuf) for contract evolution |
@@ -400,6 +400,7 @@ Or recreate the whole stack: `docker compose down && docker compose up -d --buil
 
 ## Related docs
 
+- [KAFKA_PHASE2.md](KAFKA_PHASE2.md) — Phase 2 fan-out (multiple consumer groups)
 - [CART_SERVICE_FLOW.md](CART_SERVICE_FLOW.md) — cart REST API
 - [ORDER_SERVICE_FLOW.md](ORDER_SERVICE_FLOW.md) — checkout REST API
 - [USER_SERVICE_FLOW.md](USER_SERVICE_FLOW.md) — authentication

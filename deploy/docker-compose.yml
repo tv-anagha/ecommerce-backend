@@ -150,6 +150,21 @@ services:
     ports:
       - "8085:8085"
 
+  fulfillment-service:
+    build: ../fulfillment-service
+    environment:
+      PORT: "8086"
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC: order.placed
+      KAFKA_GROUP_ID: fulfillment-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      order-service:
+        condition: service_started
+    ports:
+      - "8086:8086"
+
   api-gateway:
     build: ../api-gateway
     environment:
