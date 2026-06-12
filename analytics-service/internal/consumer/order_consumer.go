@@ -39,18 +39,18 @@ var (
 	ErrUnexpectedType = errors.New("unexpected event type")
 )
 
-// OrderConsumer reads order.placed messages from Kafka and logs notifications.
+// OrderConsumer reads order.placed messages from Kafka and logs analytics metrics.
 type OrderConsumer struct {
 	reader *kafkago.Reader
 }
 
 // NewOrderConsumer builds a consumer group reader for the order.placed topic.
-// GroupID is the critical setting: notification-service uses its own group so it
-// receives every message independently of fulfillment-service and analytics-service.
+// GroupID is the critical setting: analytics-service uses its own group so it
+// receives every message independently of notification-service and fulfillment-service.
 func NewOrderConsumer() *OrderConsumer {
 	brokers := strings.Split(env("KAFKA_BROKERS", "localhost:9092"), ",")
 	topic := env("KAFKA_TOPIC", "order.placed")
-	groupID := env("KAFKA_GROUP_ID", "notification-service")
+	groupID := env("KAFKA_GROUP_ID", "analytics-service")
 
 	log.Printf("[kafka] connecting broker=%s topic=%s group=%s", strings.Join(brokers, ","), topic, groupID)
 
@@ -88,16 +88,19 @@ func (c *OrderConsumer) Run(ctx context.Context) error {
 	}
 }
 
+// handleMessage runs only inside analytics-service. This service does not know
+// fulfillment-service or notification-service exist — it only reacts to the JSON event.
 func (c *OrderConsumer) handleMessage(msg kafkago.Message) error {
 	event, err := parseOrderPlaced(msg.Value)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[kafka] order.placed received — orderId=%d userId=%d total=%.2f partition=%d offset=%d",
-		event.OrderID, event.UserID, event.TotalAmount, msg.Partition, msg.Offset)
-	log.Printf("Thank you for your order #%d! We received your purchase of $%.2f.", event.OrderID, event.TotalAmount)
-	log.Println("Order received successfully.")
+	lineCount := len(event.Items)
+	log.Printf("[analytics] order.placed received — orderId=%d userId=%d total=%.2f",
+		event.OrderID, event.UserID, event.TotalAmount)
+	log.Printf("[analytics] recorded sale: $%.2f across %d line items", event.TotalAmount, lineCount)
+	log.Println("[analytics] daily order count would increment here")
 	return nil
 }
 

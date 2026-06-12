@@ -40,7 +40,7 @@ ORDER_JSON=$(curl -sf -X POST "$GATEWAY/api/orders" \
   -d "{\"userId\":$USER_ID}")
 echo "$ORDER_JSON"
 
-ORDER_ID=$(echo "$ORDER_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' | head -1)
+ORDER_ID=$(echo "$ORDER_JSON" | sed -n 's/^{"id":[[:space:]]*\([0-9][0-9]*\).*/\1/p')
 if [ -z "$ORDER_ID" ]; then
   echo "ERROR: could not parse order id from response"
   exit 1

@@ -23,11 +23,13 @@ See [KAFKA_IMPLEMENTATION.md](KAFKA_IMPLEMENTATION.md) for Phase 1 setup, glossa
 
 ## 1. The aha moment
 
-| | Phase 1 | Phase 2 |
-|---|---------|---------|
-| **Topology** | One producer → one consumer group | One producer → one topic → **three** consumer groups |
-| **Publish count** | Once per order | Still **once** per order |
-| **Coupling** | Order loosely knows notification exists | Order knows **nothing** about fulfillment or analytics |
+
+|                   | Phase 1                                 | Phase 2                                                |
+| ----------------- | --------------------------------------- | ------------------------------------------------------ |
+| **Topology**      | One producer → one consumer group       | One producer → one topic → **three** consumer groups   |
+| **Publish count** | Once per order                          | Still **once** per order                               |
+| **Coupling**      | Order loosely knows notification exists | Order knows **nothing** about fulfillment or analytics |
+
 
 **Rule:** Same topic + different `KAFKA_GROUP_ID` = each service gets every message independently.
 
@@ -53,6 +55,8 @@ flowchart TB
         G3 --> AS["analytics-service :8087\nRevenue stats log"]
     end
 ```
+
+
 
 ---
 
@@ -85,25 +89,31 @@ sequenceDiagram
     end
 ```
 
+
+
 ---
 
 ## 4. Consumer groups explained
 
 Kafka tracks **offsets per consumer group**. When a new group subscribes to a topic, it receives its **own copy** of every message — independent of other groups.
 
-| Concept | Phase 1 | Phase 2 |
-|---------|---------|---------|
-| **Topic** | `order.placed` | Same topic — no new topic needed |
-| **Consumer group** | `notification-service` | Each service gets its **own** group ID |
+
+| Concept             | Phase 1                                   | Phase 2                                                |
+| ------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| **Topic**           | `order.placed`                            | Same topic — no new topic needed                       |
+| **Consumer group**  | `notification-service`                    | Each service gets its **own** group ID                 |
 | **Who knows whom?** | Order knows notification exists (loosely) | Order knows **nothing** about fulfillment or analytics |
+
 
 ### Consumer group table
 
-| Service | Port | `KAFKA_GROUP_ID` | Topic |
-|---------|------|------------------|-------|
+
+| Service              | Port | `KAFKA_GROUP_ID`       | Topic          |
+| -------------------- | ---- | ---------------------- | -------------- |
 | notification-service | 8085 | `notification-service` | `order.placed` |
-| fulfillment-service | 8086 | `fulfillment-service` | `order.placed` |
-| analytics-service | 8087 | `analytics-service` | `order.placed` |
+| fulfillment-service  | 8086 | `fulfillment-service`  | `order.placed` |
+| analytics-service    | 8087 | `analytics-service`    | `order.placed` |
+
 
 All services use the same env vars for broker and topic:
 
@@ -144,11 +154,13 @@ Each consumer mirrors this struct locally. Fulfillment uses `items` for pick lis
 
 ## 6. Services in Phase 2
 
-| Service | Port | Consumer group | Reacts by... |
-|---------|------|----------------|--------------|
-| notification-service | 8085 | `notification-service` | Logging thank-you to customer |
-| fulfillment-service | 8086 | `fulfillment-service` | Logging pick list + shipment queued |
-| analytics-service | 8087 | `analytics-service` | Logging revenue / item metrics |
+
+| Service              | Port | Consumer group         | Reacts by...                        |
+| -------------------- | ---- | ---------------------- | ----------------------------------- |
+| notification-service | 8085 | `notification-service` | Logging thank-you to customer       |
+| fulfillment-service  | 8086 | `fulfillment-service`  | Logging pick list + shipment queued |
+| analytics-service    | 8087 | `analytics-service`    | Logging revenue / item metrics      |
+
 
 All subscribe to topic `order.placed`. Order-service publishes **once**.
 
@@ -242,13 +254,15 @@ orderId=6  →  analytics:       "recorded sale: $79999.00 across 1 line items"
 
 ## 10. Out of scope
 
-| Topic | Planned phase |
-|-------|---------------|
-| Idempotent consumers / dedupe by `orderId` | Phase 3 |
-| Dead-letter topic | Phase 3 |
-| Persisting fulfillment jobs or analytics to Postgres | Phase 4+ |
-| Gateway routes for fulfillment/analytics | Not needed — Kafka-only |
-| EC2 minimal compose (no Kafka) | Phase 2 requires full `deploy/docker-compose.yml` |
+
+| Topic                                                | Planned phase                                     |
+| ---------------------------------------------------- | ------------------------------------------------- |
+| Idempotent consumers / dedupe by `orderId`           | Phase 3                                           |
+| Dead-letter topic                                    | Phase 3                                           |
+| Persisting fulfillment jobs or analytics to Postgres | Phase 4+                                          |
+| Gateway routes for fulfillment/analytics             | Not needed — Kafka-only                           |
+| EC2 minimal compose (no Kafka)                       | Phase 2 requires full `deploy/docker-compose.yml` |
+
 
 ---
 
@@ -256,3 +270,4 @@ orderId=6  →  analytics:       "recorded sale: $79999.00 across 1 line items"
 
 - [KAFKA_IMPLEMENTATION.md](KAFKA_IMPLEMENTATION.md) — Phase 1 producer/consumer setup
 - [ORDER_SERVICE_FLOW.md](ORDER_SERVICE_FLOW.md) — checkout REST API
+

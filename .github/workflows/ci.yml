@@ -21,6 +21,8 @@ jobs:
           - cart-service
           - order-service
           - notification-service
+          - fulfillment-service
+          - analytics-service
 
     defaults:
       run:

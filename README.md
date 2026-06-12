@@ -1,6 +1,6 @@
 # Ecommerce Backend (Microservices)
 
-Go monorepo with API gateway, product catalog, cart, orders, user auth, and **Phase 1 Kafka** (`order.placed` → notification-service).
+Go monorepo with API gateway, product catalog, cart, orders, user auth, and **Kafka event-driven flows** (Phase 1 producer/consumer, Phase 2 fan-out).
 
 ## Architecture
 
@@ -11,17 +11,20 @@ Go monorepo with API gateway, product catalog, cart, orders, user auth, and **Ph
 | user-service | 8082 | Register, login, JWT for checkout |
 | cart-service | 8083 | Shopping carts |
 | order-service | 8084 | Checkout; publishes `order.placed` to Kafka |
-| notification-service | 8085 | Consumes `order.placed`, logs thank-you |
+| notification-service | 8085 | Consumer group `notification-service` — thank-you log |
+| fulfillment-service | 8086 | Consumer group `fulfillment-service` — pick & ship log |
+| analytics-service | 8087 | Consumer group `analytics-service` — revenue metrics log |
 | kafka | 9092 | Event broker (Docker internal: `kafka:29092`) |
 
-See [USER_SERVICE_FLOW.md](USER_SERVICE_FLOW.md), [ORDER_SERVICE_FLOW.md](ORDER_SERVICE_FLOW.md), and [KAFKA_IMPLEMENTATION.md](KAFKA_IMPLEMENTATION.md).
+See [USER_SERVICE_FLOW.md](USER_SERVICE_FLOW.md), [ORDER_SERVICE_FLOW.md](ORDER_SERVICE_FLOW.md), [KAFKA_IMPLEMENTATION.md](KAFKA_IMPLEMENTATION.md), and [KAFKA_PHASE2.md](KAFKA_PHASE2.md).
 
 ## Quick start (Docker — full stack with Kafka)
 
 ```bash
 cd deploy
 docker compose up --build -d
-./scripts/test-phase1.sh   # verify order.placed → thank-you loop
+./scripts/test-phase1.sh   # Phase 1: order.placed → notification
+./scripts/test-phase2.sh   # Phase 2: one event → three consumers
 ```
 
 ```bash
@@ -29,7 +32,7 @@ curl http://localhost:8080/health
 curl http://localhost:8080/api/products
 ```
 
-**Small VMs:** use `docker-compose.minimal.yml` (no Kafka). Phase 1 requires full `docker-compose.yml`.
+**Small VMs:** use `docker-compose.minimal.yml` (no Kafka). Phase 1/2 require full `docker-compose.yml`.
 
 ## Local development (without Docker)
 

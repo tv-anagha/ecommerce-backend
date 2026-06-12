@@ -16,7 +16,7 @@ fi
 if [ "$COMPOSE_FILE" = "docker-compose.minimal.yml" ]; then
   SERVICES="product-service user-service cart-service order-service api-gateway"
 else
-  SERVICES="product-service user-service cart-service order-service notification-service api-gateway"
+  SERVICES="product-service user-service cart-service order-service notification-service fulfillment-service analytics-service api-gateway"
 fi
 
 for svc in $SERVICES; do
